@@ -1,9 +1,10 @@
 from typing import Optional
 
+from common.meta import SingletonMeta
 from connectors.db.postgres import PostgresDataService
 
 
-class PollsDataService(PostgresDataService):
+class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
     """Class for data manipulation for polls."""
     def __init__(
             self, host: str, port: int, database: str, user: str, password: str, schema: Optional[str] = None
