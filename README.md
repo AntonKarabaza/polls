@@ -1,7 +1,7 @@
 # Polls
 
 ## General
-This is an asynchronous web application for doing polls.
+This is an asynchronous web application for doing polls. It was based on the [aiohttp tutorial] with added enhancements.
 
 ## Run application
 Prerequisites:
@@ -16,3 +16,5 @@ Run application:
 ```shell
 python app/main.py
 ```
+
+[aiohttp tutorial]: https://aiohttp-demos.readthedocs.io/en/latest/index.html
