@@ -12,4 +12,4 @@ async def index(request):
 async def get_questions(request):
     polls_data_service = PollsDataService.get_instance()
     questions = await polls_data_service.get_questions()
-    return web.Response(text=to_json(questions))
+    return web.Response(text=to_json(tuple(question.as_dict() for question in questions)))
