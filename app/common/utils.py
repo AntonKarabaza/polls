@@ -13,7 +13,7 @@ class PythonObjectEncoder(json.JSONEncoder):
             return list(obj)
         elif isinstance(obj, decimal.Decimal):
             return float(obj)
-        elif isinstance(obj, datetime.datetime):
+        elif isinstance(obj, datetime.date):
             return str(obj)
 
 
