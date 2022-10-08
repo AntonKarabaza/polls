@@ -1,8 +1,8 @@
 from aiohttp import web
 
-from api.views import index, get_questions
+from api.views import Index, QuestionList
 
 
 def set_up_routes(app: web.Application):
-    app.router.add_get('/', index)
-    app.router.add_get('/questions', get_questions)
+    app.router.add_view('/', Index)
+    app.router.add_view('/questions', QuestionList)
