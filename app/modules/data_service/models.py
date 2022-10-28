@@ -1,3 +1,5 @@
+from typing import Iterable
+
 from sqlalchemy import (
     Column, ForeignKey, Integer, String, Date
 )
@@ -9,8 +11,14 @@ DeclarativeBase = declarative_base()
 class BaseTable(DeclarativeBase):
     __abstract__ = True
 
-    def as_dict(self):
-        return {col.name: getattr(self, col.name) for col in self.__table__.columns}
+    def as_dict(self, include_relations: Iterable[relationship] = tuple()) -> dict:
+        return {
+            **{col.name: getattr(self, col.name) for col in self.__table__.columns},
+            **{
+                relation.key: tuple(entity.as_dict() for entity in getattr(self, relation.key))
+                for relation in include_relations
+            }
+        }
 
 
 class Question(BaseTable):
