@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from sqlalchemy import (
-    Column, ForeignKey, Integer, String, Date
+    Column, ForeignKey, Integer, String, Date, func
 )
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -23,10 +23,11 @@ class BaseTable(DeclarativeBase):
 
 class Question(BaseTable):
     __tablename__ = 'question'
+    __mapper_args__ = {'eager_defaults': True}
 
     id = Column(Integer, primary_key=True)
     question_text = Column(String(200), nullable=False)
-    pub_date = Column(Date, nullable=False)
+    pub_date = Column(Date, server_default=func.now(), nullable=False)
 
     choices = relationship('Choice', back_populates='question')
 
