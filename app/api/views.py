@@ -43,7 +43,7 @@ class QuestionList(web.View):
                 wrapped_question_choices.append(Choice(**choice))
             wrapped_questions.append(Question(**question, choices=wrapped_question_choices))
 
-        await polls_data_service.create_questions(wrapped_questions)
+        await polls_data_service.create(entities=wrapped_questions)
 
         return web.Response(
             text=to_json(tuple(question.as_dict() for question in wrapped_questions)),

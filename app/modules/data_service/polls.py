@@ -1,11 +1,12 @@
-from typing import Optional, Tuple, Iterable
+from typing import Optional, Tuple, Iterable, Type
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, selectinload
 
 from common.meta import SingletonMeta
 from connectors.db.postgres import PostgresDataService
-from modules.data_service.models import Question
+from modules.data_service.models import Question, BaseTable
 
 
 class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
@@ -32,11 +33,24 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
     async def get_choices(self):
         raise NotImplementedError
 
-    async def create_questions(self, questions: Iterable[Question]):
-        """Create in database given questions.
+    async def create(self, entities: Iterable[Type[BaseTable]]):
+        """Create in database given entities.
 
-        :param questions: questions to create in DB.
-        :type questions: Iterable[Question].
+        :param entities: entities to create in DB.
+        :type entities: Iterable[Type[BaseTable]].
         """
-        async with self.transaction() as session:
-            session.add_all(questions)
+        await self._create(entities=entities)
+
+    async def _create(self, entities: Iterable[Type[BaseTable]], session: Optional[AsyncSession] = None):
+        """Create in database given entities.
+
+        :param entities: entities to create in DB.
+        :type entities: Iterable[Type[BaseTable]].
+        :param session: session to use for creating entries in database.
+        :type session: Optional[AsyncSession], default None.
+        """
+        if not session:
+            async with self.transaction() as session:
+                session.add_all(entities)
+        else:
+            session.add_all(entities)
