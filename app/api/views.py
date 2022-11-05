@@ -46,6 +46,8 @@ class QuestionList(web.View):
         await polls_data_service.create(entities=wrapped_questions)
 
         return web.Response(
-            text=to_json(tuple(question.as_dict() for question in wrapped_questions)),
+            text=to_json(
+                tuple(question.as_dict(include_relations=(Question.choices,)) for question in wrapped_questions)
+            ),
             status=HTTPStatus.OK
         )
