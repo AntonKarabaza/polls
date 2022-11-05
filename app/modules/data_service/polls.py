@@ -12,7 +12,7 @@ from modules.data_service.models import Question, BaseTable
 class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
     """Class for data manipulation for polls."""
     def __init__(
-            self, host: str, port: int, database: str, user: str, password: str, schema: Optional[str] = None
+        self, host: str, port: int, database: str, user: str, password: str, schema: Optional[str] = None
     ):
         super().__init__(host, port, database, user, password, schema)
 
@@ -41,7 +41,7 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
         """
         await self._create(entities=entities)
 
-    async def _create(self, entities: Iterable[Type[BaseTable]], session: Optional[AsyncSession] = None):
+    async def create(self, entities: Iterable[Type[BaseTable]], session: Optional[AsyncSession] = None):
         """Create in database given entities.
 
         :param entities: entities to create in DB.
@@ -51,6 +51,16 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
         """
         if not session:
             async with self.transaction() as session:
-                session.add_all(entities)
+                await self._create(entities=entities, session=session)
         else:
-            session.add_all(entities)
+            await self._create(entities=entities, session=session)
+
+    async def _create(self, entities: Iterable[Type[BaseTable]], session: AsyncSession):
+        """Create in database given entities.
+
+        :param entities: entities to create in DB.
+        :type entities: Iterable[Type[BaseTable]].
+        :param session: session to use for creating entries in database.
+        :type session: AsyncSession.
+        """
+        session.add_all(entities)
