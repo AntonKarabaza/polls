@@ -25,7 +25,7 @@ class QuestionList(web.View):
             expand_entities = tuple()
 
         include_relations = tuple(getattr(Question, expand_entity) for expand_entity in expand_entities)
-        questions = await polls_data_service.get_questions(with_relations=include_relations)
+        questions = await polls_data_service.get(entity=Question, with_relations=include_relations)
 
         return web.Response(
             text=to_json(tuple(question.as_dict(include_relations=include_relations) for question in questions)),

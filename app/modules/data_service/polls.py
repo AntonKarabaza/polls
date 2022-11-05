@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, selectinload
 
 from common.meta import SingletonMeta
 from connectors.db.postgres import PostgresDataService
-from modules.data_service.models import Question, BaseTable
+from modules.data_service.models import BaseTable
 
 
 class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
@@ -16,30 +16,47 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
     ):
         super().__init__(host, port, database, user, password, schema)
 
-    async def get_questions(self, with_relations: Optional[Iterable[relationship]] = None) -> Tuple[Question]:
-        """Retrieve data for poll questions.
+    async def get(
+        self, entity: Type[BaseTable], with_relations: Optional[Iterable[relationship]] = None,
+        session: Optional[AsyncSession] = None
+    ) -> Tuple[Type[BaseTable]]:
+        """Retrieve data for given entity from database.
 
-        :param with_relations: additional relationships to load with questions.
+        :param entity: entity which should be retrieved from database.
+        :type entity: Type[BaseTable].
+        :param with_relations: additional relationships to load with given entity.
         :type with_relations: Optional[Iterable[relationship]], default None.
+        :param session: session to use for retrieving entries from database.
+        :type session: Optional[AsyncSession], default None.
+        :return: tuple of retrieved entities.
+        :rtype: Tuple[Type[BaseTable]].
         """
-        async with self.transaction() as session:
-            stmt = select(Question)
-            if with_relations:
-                stmt = stmt.options(*(selectinload(relation) for relation in with_relations))
-            result = await session.execute(stmt)
-            questions = result.scalars().all()
-            return tuple(questions)
+        if not session:
+            async with self.transaction() as session:
+                return await self._get(entity=entity, with_relations=with_relations, session=session)
+        else:
+            return await self._get(entity=entity, with_relations=with_relations, session=session)
 
-    async def get_choices(self):
-        raise NotImplementedError
+    async def _get(
+        self, entity: Type[BaseTable], session: AsyncSession, with_relations: Optional[Iterable[relationship]] = None
+    ) -> Tuple[Type[BaseTable]]:
+        """Retrieve data for given entity from database.
 
-    async def create(self, entities: Iterable[Type[BaseTable]]):
-        """Create in database given entities.
-
-        :param entities: entities to create in DB.
-        :type entities: Iterable[Type[BaseTable]].
+        :param entity: entity which should be retrieved from database.
+        :type entity: Type[BaseTable].
+        :param session: session to use for retrieving entries from database.
+        :type session: AsyncSession.
+        :param with_relations: additional relationships to load with given entity.
+        :type with_relations: Optional[Iterable[relationship]], default None.
+        :return: tuple of retrieved entities.
+        :rtype: Tuple[Type[BaseTable]].
         """
-        await self._create(entities=entities)
+        stmt = select(entity)
+        if with_relations:
+            stmt = stmt.options(*(selectinload(relation) for relation in with_relations))
+        result = await session.execute(stmt)
+        entities = result.scalars().all()
+        return tuple(entities)
 
     async def create(self, entities: Iterable[Type[BaseTable]], session: Optional[AsyncSession] = None):
         """Create in database given entities.
