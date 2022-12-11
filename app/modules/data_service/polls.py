@@ -52,12 +52,16 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
         :type entity: Type[BaseTable].
         :param session: session to use for retrieving entries from database.
         :type session: AsyncSession.
+        :param conditions: mapping of columns to values which should be used as conditions while retrieving.
+        :type conditions: Optional[MutableMapping[Column, Any]], default None.
         :param with_relations: additional relationships to load with given entity.
         :type with_relations: Optional[Iterable[relationship]], default None.
         :return: tuple of retrieved entities.
         :rtype: Tuple[Type[BaseTable]].
         """
         stmt = select(entity)
+        for column, value in (conditions or {}).items():
+            stmt = stmt.where(column == value)
         if with_relations:
             stmt = stmt.options(*(selectinload(relation) for relation in with_relations))
         result = await session.execute(stmt)
