@@ -10,14 +10,16 @@ from modules.data_service.polls import PollsDataService
 
 class Index(web.View):
     """Index web view."""
+
     async def get(self) -> web.Response:
         return web.Response(text=to_json({'message': 'Hello Aiohttp!'}), status=HTTPStatus.OK)
 
 
 class QuestionList(web.View):
     """View for manipulating list of questions."""
+
     async def get(self) -> web.Response:
-        polls_data_service = PollsDataService.get_instance()
+        polls_data_service: PollsDataService = PollsDataService.get_instance()
 
         try:
             expand_entities = self.request.query['expand'].split(',')
@@ -33,7 +35,7 @@ class QuestionList(web.View):
         )
 
     async def post(self) -> web.Response:
-        polls_data_service = PollsDataService.get_instance()
+        polls_data_service: PollsDataService = PollsDataService.get_instance()
         wrapped_questions = []
         posted_questions = await self.request.json()
 
