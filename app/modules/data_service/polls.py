@@ -13,19 +13,25 @@ from modules.data_service.models import BaseTable
 
 class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
     """Class for data manipulation for polls."""
+
     def __init__(
         self, host: str, port: int, database: str, user: str, password: str, schema: Optional[str] = None
     ):
         super().__init__(host, port, database, user, password, schema)
 
     async def get(
-        self, entity: Type[BaseTable], with_relations: Optional[Iterable[relationship]] = None,
-        session: Optional[AsyncSession] = None
+        self,
+        entity: Type[BaseTable],
+        conditions: MutableMapping[Column, Any] = None,
+        with_relations: Optional[Iterable[relationship]] = None,
+        session: Optional[AsyncSession] = None,
     ) -> Tuple[BaseTable]:
         """Retrieve data for given entity from database.
 
         :param entity: entity which should be retrieved from database.
         :type entity: Type[BaseTable].
+        :param conditions: mapping of columns to values which should be used as conditions while retrieving.
+        :type conditions: Optional[MutableMapping[Column, Any]], default None.
         :param with_relations: additional relationships to load with given entity.
         :type with_relations: Optional[Iterable[relationship]], default None.
         :param session: session to use for retrieving entries from database.
@@ -33,18 +39,24 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
         :return: tuple of retrieved entities.
         :rtype: Tuple[Type[BaseTable]].
         """
+        get = partial(
+            self._get,
+            entity=entity,
+            conditions=conditions,
+            with_relations=with_relations,
+        )
         if not session:
             async with self.transaction() as session:
-                return await self._get(entity=entity, with_relations=with_relations, session=session)
+                return await get(session=session)
         else:
-            return await self._get(entity=entity, with_relations=with_relations, session=session)
+            return await get(session=session)
 
     async def _get(
         self,
         entity: Type[BaseTable],
         session: AsyncSession,
         conditions: MutableMapping[Column, Any] = None,
-        with_relations: Optional[Iterable[relationship]] = None
+        with_relations: Optional[Iterable[relationship]] = None,
     ) -> Tuple[BaseTable]:
         """Retrieve data for given entity from database.
 
