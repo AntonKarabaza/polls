@@ -51,3 +51,28 @@ class QuestionList(web.View):
             ),
             status=HTTPStatus.OK
         )
+
+
+class QuestionSingle(web.View):
+    """View for manipulating single question."""
+
+    async def put(self) -> web.Response:
+        polls_data_service: PollsDataService = PollsDataService.get_instance()
+        question_id = int(self.request.match_info['question_id'])
+        question_attrs_to_update = await self.request.json()
+
+        question_attrs_to_update_wrapped_map = {
+           getattr(Question, attribute): value for attribute, value in question_attrs_to_update.items()
+        }
+
+        updated_questions = await polls_data_service.update(
+            entity=Question,
+            set_values=question_attrs_to_update_wrapped_map,
+            conditions={Question.id: question_id},
+            returning=True,
+        )
+
+        return web.Response(
+            text=to_json(tuple(question.as_dict() for question in updated_questions)),
+            status=HTTPStatus.OK
+        )
