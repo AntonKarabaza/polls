@@ -21,7 +21,7 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
     async def get(
         self, entity: Type[BaseTable], with_relations: Optional[Iterable[relationship]] = None,
         session: Optional[AsyncSession] = None
-    ) -> Tuple[Type[BaseTable]]:
+    ) -> Tuple[BaseTable]:
         """Retrieve data for given entity from database.
 
         :param entity: entity which should be retrieved from database.
@@ -40,8 +40,12 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
             return await self._get(entity=entity, with_relations=with_relations, session=session)
 
     async def _get(
-        self, entity: Type[BaseTable], session: AsyncSession, with_relations: Optional[Iterable[relationship]] = None
-    ) -> Tuple[Type[BaseTable]]:
+        self,
+        entity: Type[BaseTable],
+        session: AsyncSession,
+        conditions: MutableMapping[Column, Any] = None,
+        with_relations: Optional[Iterable[relationship]] = None
+    ) -> Tuple[BaseTable]:
         """Retrieve data for given entity from database.
 
         :param entity: entity which should be retrieved from database.
@@ -60,7 +64,7 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
         entities = result.scalars().all()
         return tuple(entities)
 
-    async def create(self, entities: Iterable[Type[BaseTable]], session: Optional[AsyncSession] = None):
+    async def create(self, entities: Iterable[BaseTable], session: Optional[AsyncSession] = None):
         """Create in database given entities.
 
         :param entities: entities to create in DB.
@@ -74,7 +78,7 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
         else:
             await self._create(entities=entities, session=session)
 
-    async def _create(self, entities: Iterable[Type[BaseTable]], session: AsyncSession):
+    async def _create(self, entities: Iterable[BaseTable], session: AsyncSession):
         """Create in database given entities.
 
         :param entities: entities to create in DB.
