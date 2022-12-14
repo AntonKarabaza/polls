@@ -78,3 +78,15 @@ class QuestionSingle(web.View):
             text=to_json(tuple(question.as_dict() for question in updated_questions)),
             status=HTTPStatus.OK
         )
+
+    async def delete(self) -> web.Response:
+        polls_data_service: PollsDataService = PollsDataService.get_instance()
+        question_id = int(self.request.match_info['question_id'])
+
+        await polls_data_service.delete(
+            entity=Question,
+            conditions={Question.id: question_id},
+            returning=False,
+        )
+
+        return web.Response(status=HTTPStatus.NO_CONTENT)
