@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Optional, Tuple, Iterable, Type, MutableMapping, Any
 
-from sqlalchemy import Column, update
+from sqlalchemy import Column, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, selectinload
@@ -164,6 +164,70 @@ class PollsDataService(PostgresDataService, metaclass=SingletonMeta):
         :rtype: Optional[Iterable[BaseTable]].
         """
         stmt = update(entity).values(**{column.name: value for column, value in set_values.items()})
+        for column, value in (conditions or {}).items():
+            stmt = stmt.where(column == value)
+        if returning:
+            stmt = stmt.returning(entity)
+
+        result = await session.execute(stmt)
+
+        if returning:
+            entities = tuple(entity(**record) for record in result.fetchall())
+            return entities
+
+    async def delete(
+        self,
+        entity: Type[BaseTable],
+        conditions: Optional[MutableMapping[Column, Any]] = None,
+        returning: bool = False,
+        session: Optional[AsyncSession] = None,
+    ) -> Optional[Iterable[BaseTable]]:
+        """Delete from database given entity.
+
+        :param entity: entity which should be deleted from database.
+        :type entity: Type[BaseTable].
+        :param conditions: mapping of columns to values which should be used as conditions during delete.
+        :type conditions: Optional[MutableMapping[Column, Any]], default None.
+        :param returning: condition if deleted entities should be returned after delete.
+        :type returning: bool, default False.
+        :param session: session to use for deleting entries in database.
+        :type session: Optional[AsyncSession], default None.
+        :return: deleted entities or None.
+        :rtype: Optional[Iterable[BaseTable]].
+        """
+        delete = partial(
+            self._delete,
+            entity=entity,
+            conditions=conditions,
+            returning=returning,
+        )
+        if not session:
+            async with self.transaction() as session:
+                return await delete(session=session)
+        else:
+            return await delete(session=session)
+
+    async def _delete(
+        self,
+        entity: Type[BaseTable],
+        session: AsyncSession,
+        conditions: MutableMapping[Column, Any] = None,
+        returning: bool = False,
+    ) -> Optional[Iterable[BaseTable]]:
+        """Delete from database given entity.
+
+        :param entity: entity which should be deleted from database.
+        :type entity: Type[BaseTable].
+        :param session: session to use for deleting entries from database.
+        :type session: AsyncSession.
+        :param conditions: mapping of columns to values which should be used as conditions during delete.
+        :type conditions: Optional[MutableMapping[Column, Any]], default None.
+        :param returning: condition if deleted entities should be returned after delete.
+        :type returning: bool, default False.
+        :return: deleted entities or None.
+        :rtype: Optional[Iterable[BaseTable]].
+        """
+        stmt = delete(entity)
         for column, value in (conditions or {}).items():
             stmt = stmt.where(column == value)
         if returning:
